@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const STATUS_CONFIG = {
   "reached_out": { label: "Reached Out", color: "#6b8cba", bg: "rgba(107,140,186,0.15)" },
-  "had_call":    { label: "Had Call",     color: "#c9a84c", bg: "rgba(201,168,76,0.15)" },
+  "had_call":    { label: "Had Call",     color: "#4a90d9", bg: "rgba(201,168,76,0.15)" },
   "warm":        { label: "Warm",         color: "#7fba7a", bg: "rgba(127,186,122,0.15)" },
   "strong":      { label: "Strong",       color: "#b07fd1", bg: "rgba(176,127,209,0.15)" },
   "lost_touch":  { label: "Lost Touch",   color: "#888",    bg: "rgba(136,136,136,0.12)" },
@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   lastContact:"", followUpDate:"", notes:""
 };
 
-const AVATAR_COLORS = ["#c9a84c","#6b8cba","#7fba7a","#b07fd1","#c47a5a","#5ab5c4","#ba7f8b"];
+const AVATAR_COLORS = ["#4a90d9","#6b8cba","#7fba7a","#b07fd1","#c47a5a","#5ab5c4","#ba7f8b"];
 
 function avatarColor(name) {
   let h = 0;
@@ -44,7 +44,7 @@ function daysUntil(d) {
 
 const T = {
   bg: "#0d0c0b", surface: "#161512", surface2: "#1e1c18",
-  border: "rgba(255,255,255,0.07)", gold: "#c9a84c",
+  border: "rgba(255,255,255,0.07)", gold: "#4a90d9",
   text: "#e8e4dc", muted: "#8a8070",
 };
 
@@ -91,7 +91,7 @@ const s = {
   statusBadge: { fontSize:"0.68rem", padding:"3px 8px", borderRadius:"20px", whiteSpace:"nowrap", fontWeight:500 },
   followUpChip: { fontSize:"0.68rem", color:T.muted, padding:"2px 7px", background:T.surface2, borderRadius:"4px" },
   overdue: { color:"#c47a5a", background:"rgba(196,122,90,0.15)" },
-  soon: { color:"#c9a84c", background:"rgba(201,168,76,0.15)" },
+  soon: { color:"#4a90d9", background:"rgba(201,168,76,0.15)" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"4rem", gap:"1rem", color:T.muted },
   emptyIcon: { fontSize:"2.5rem", opacity:0.3 },
   emptyText: { fontSize:"0.9rem" },
@@ -386,7 +386,7 @@ function PipelineView({ contacts, onSelect }) {
       ) : (
         <>
           {overdue.length > 0 && <PipelineSection title="Overdue" contacts={overdue} onSelect={onSelect} accent="#c47a5a" />}
-          {today.length > 0 && <PipelineSection title="Due Today" contacts={today} onSelect={onSelect} accent="#c9a84c" />}
+          {today.length > 0 && <PipelineSection title="Due Today" contacts={today} onSelect={onSelect} accent="#4a90d9" />}
           {soon.length > 0 && <PipelineSection title="This Week" contacts={soon} onSelect={onSelect} accent="#6b8cba" />}
         </>
       )}
