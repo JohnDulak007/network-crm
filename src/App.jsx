@@ -2,22 +2,35 @@ import { useState, useEffect } from "react";
 
 const STATUS_CONFIG = {
   "reached_out": { label: "Reached Out", color: "#6b8cba", bg: "rgba(107,140,186,0.15)" },
-  "had_call":    { label: "Had Call",     color: "#4a90d9", bg: "rgba(201,168,76,0.15)" },
+  "had_call":    { label: "Had Call",     color: "#c9a84c", bg: "rgba(201,168,76,0.15)" },
   "warm":        { label: "Warm",         color: "#7fba7a", bg: "rgba(127,186,122,0.15)" },
   "strong":      { label: "Strong",       color: "#b07fd1", bg: "rgba(176,127,209,0.15)" },
   "lost_touch":  { label: "Lost Touch",   color: "#888",    bg: "rgba(136,136,136,0.12)" },
   "no_reply":    { label: "No Reply",     color: "#c47a5a", bg: "rgba(196,122,90,0.15)" },
 };
 
-const HOW_MET_OPTIONS = ["LinkedIn","Cold Outreach","Referral","Event/Conference","Twitter/X","In Person","Class/School","Other"];
+const FOLLOW_UP_PRESETS = [
+  { label: "Tomorrow",   days: 1 },
+  { label: "In 3 days",  days: 3 },
+  { label: "In 1 week",  days: 7 },
+  { label: "In 2 weeks", days: 14 },
+  { label: "In 1 month", days: 30 },
+  { label: "In 3 months",days: 90 },
+  { label: "Custom date",days: null },
+];
+
+function addDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
 
 const EMPTY_FORM = {
-  name:"", company:"", role:"", email:"", linkedin:"",
-  howMet:"", status:"reached_out", tags:"",
-  lastContact:"", followUpDate:"", notes:""
+  name: "", company: "", role: "", status: "reached_out",
+  lastContact: "", followUpDate: "", notes: ""
 };
 
-const AVATAR_COLORS = ["#4a90d9","#6b8cba","#7fba7a","#b07fd1","#c47a5a","#5ab5c4","#ba7f8b"];
+const AVATAR_COLORS = ["#c9a84c","#6b8cba","#7fba7a","#b07fd1","#c47a5a","#5ab5c4","#ba7f8b"];
 
 function avatarColor(name) {
   let h = 0;
@@ -44,7 +57,7 @@ function daysUntil(d) {
 
 const T = {
   bg: "#0d0c0b", surface: "#161512", surface2: "#1e1c18",
-  border: "rgba(255,255,255,0.07)", gold: "#4a90d9",
+  border: "rgba(255,255,255,0.07)", gold: "#c9a84c",
   text: "#e8e4dc", muted: "#8a8070",
 };
 
@@ -83,15 +96,12 @@ const s = {
   cardInfo: { flex:1, minWidth:0 },
   cardName: { fontWeight:500, fontSize:"0.88rem", color:T.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" },
   cardRole: { fontSize:"0.75rem", color:T.muted, marginTop:"2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" },
-  cardMeta: { fontSize:"0.72rem", color:T.muted, marginBottom:"8px" },
   cardBottom: { display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:"10px" },
   cardDate: { fontSize:"0.7rem", color:T.muted },
-  tagRow: { display:"flex", gap:"4px", flexWrap:"wrap", marginBottom:"6px" },
-  tag: { background:"rgba(201,168,76,0.1)", color:T.gold, fontSize:"0.65rem", padding:"2px 7px", borderRadius:"4px" },
   statusBadge: { fontSize:"0.68rem", padding:"3px 8px", borderRadius:"20px", whiteSpace:"nowrap", fontWeight:500 },
   followUpChip: { fontSize:"0.68rem", color:T.muted, padding:"2px 7px", background:T.surface2, borderRadius:"4px" },
   overdue: { color:"#c47a5a", background:"rgba(196,122,90,0.15)" },
-  soon: { color:"#4a90d9", background:"rgba(201,168,76,0.15)" },
+  soon: { color:"#c9a84c", background:"rgba(201,168,76,0.15)" },
   empty: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"4rem", gap:"1rem", color:T.muted },
   emptyIcon: { fontSize:"2.5rem", opacity:0.3 },
   emptyText: { fontSize:"0.9rem" },
@@ -107,23 +117,25 @@ const s = {
   detailField: { background:T.surface, borderRadius:"10px", padding:"12px 14px", border:`1px solid ${T.border}` },
   detailFieldLabel: { fontSize:"0.68rem", color:T.muted, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:"4px" },
   detailFieldVal: { fontSize:"0.85rem", color:T.text },
-  link: { color:T.gold, textDecoration:"none" },
   notesBox: { background:T.surface, border:`1px solid ${T.border}`, borderRadius:"10px", padding:"16px" },
   notesLabel: { fontSize:"0.68rem", color:T.muted, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:"8px" },
   notesText: { fontSize:"0.85rem", color:T.text, lineHeight:1.7, whiteSpace:"pre-wrap" },
   pipelineSection: { fontSize:"0.72rem", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.1em", borderLeft:"2px solid", paddingLeft:"10px", marginBottom:"0.75rem" },
   pipelineRow: { display:"flex", alignItems:"center", gap:"12px", background:T.surface, border:`1px solid ${T.border}`, borderRadius:"10px", padding:"12px 14px", marginBottom:"8px", cursor:"pointer", transition:"all 0.15s" },
   overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:"1rem" },
-  modal: { background:T.surface, border:`1px solid ${T.border}`, borderRadius:"16px", width:"100%", maxWidth:"600px", maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
+  modal: { background:T.surface, border:`1px solid ${T.border}`, borderRadius:"16px", width:"100%", maxWidth:"480px", maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
   modalHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"1.25rem 1.5rem", borderBottom:`1px solid ${T.border}` },
   modalTitle: { fontFamily:"'Cormorant Garant', serif", fontSize:"1.2rem", fontWeight:600 },
   closeBtn: { background:"transparent", border:"none", color:T.muted, fontSize:"1rem", cursor:"pointer" },
-  modalBody: { padding:"1.5rem", overflow:"auto", display:"flex", flexDirection:"column", gap:"12px" },
+  modalBody: { padding:"1.5rem", overflow:"auto", display:"flex", flexDirection:"column", gap:"14px" },
   modalFooter: { padding:"1rem 1.5rem", borderTop:`1px solid ${T.border}`, display:"flex", justifyContent:"flex-end", gap:"8px" },
   formRow: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
   formGroup: { display:"flex", flexDirection:"column", gap:"5px" },
   formLabel: { fontSize:"0.72rem", color:T.muted, textTransform:"uppercase", letterSpacing:"0.05em" },
   input: { background:T.surface2, border:`1px solid ${T.border}`, borderRadius:"8px", padding:"8px 10px", color:T.text, fontSize:"0.82rem", outline:"none", fontFamily:"'DM Sans', sans-serif", width:"100%", boxSizing:"border-box" },
+  presetRow: { display:"flex", gap:"6px", flexWrap:"wrap", marginTop:"4px" },
+  presetBtn: { background:T.surface2, border:`1px solid ${T.border}`, borderRadius:"6px", padding:"4px 10px", color:T.muted, fontSize:"0.72rem", cursor:"pointer", fontFamily:"'DM Sans', sans-serif", transition:"all 0.1s" },
+  presetBtnActive: { background:"rgba(201,168,76,0.15)", borderColor:"rgba(201,168,76,0.4)", color:T.gold },
   cancelBtn: { background:"transparent", border:`1px solid ${T.border}`, color:T.muted, borderRadius:"8px", padding:"8px 16px", cursor:"pointer", fontSize:"0.82rem", fontFamily:"'DM Sans', sans-serif" },
   submitBtn: { background:T.gold, color:"#0d0c0b", border:"none", borderRadius:"8px", padding:"8px 20px", fontWeight:500, cursor:"pointer", fontSize:"0.82rem", fontFamily:"'DM Sans', sans-serif" },
   deleteBtn: { background:"rgba(196,122,90,0.15)", border:"1px solid rgba(196,122,90,0.3)", color:"#c47a5a", borderRadius:"8px", padding:"8px 16px", cursor:"pointer", fontSize:"0.82rem", fontFamily:"'DM Sans', sans-serif" },
@@ -133,7 +145,6 @@ const s = {
   confirmBtns: { display:"flex", gap:"8px", justifyContent:"flex-end" },
 };
 
-// ── STORAGE (localStorage) ────────────────────────────────────────────────
 const STORAGE_KEY = "network_crm_contacts";
 function loadContacts() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
@@ -142,7 +153,6 @@ function saveContacts(c) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(c)); } catch {}
 }
 
-// ── MAIN APP ──────────────────────────────────────────────────────────────
 export default function App() {
   const [contacts, setContacts] = useState(() => loadContacts());
   const [view, setView] = useState("all");
@@ -172,7 +182,7 @@ export default function App() {
 
   function deleteContact(id) {
     setContacts(cs => cs.filter(c => c.id !== id));
-    if (selectedId === id) { setSelectedId(null); }
+    if (selectedId === id) setSelectedId(null);
     setDeleteConfirm(null);
   }
 
@@ -180,7 +190,7 @@ export default function App() {
 
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase();
-    return (!q || c.name.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q) || c.tags?.toLowerCase().includes(q))
+    return (!q || c.name.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q))
       && (filterStatus === "all" || c.status === filterStatus);
   }).sort((a, b) => {
     if (sortBy === "lastContact") return (b.lastContact || "") > (a.lastContact || "") ? 1 : -1;
@@ -202,7 +212,6 @@ export default function App() {
 
   return (
     <div style={s.root}>
-      {/* SIDEBAR */}
       <aside style={s.sidebar}>
         <div style={s.brand}>
           <span style={s.brandIcon}>◈</span>
@@ -233,7 +242,6 @@ export default function App() {
         <button style={s.addBtn} onClick={openAdd}>+ Add Contact</button>
       </aside>
 
-      {/* MAIN */}
       <main style={s.main}>
         {selectedId && selected ? (
           <DetailView contact={selected} onBack={() => setSelectedId(null)} onEdit={() => openEdit(selected)} onDelete={() => setDeleteConfirm(selected.id)} />
@@ -273,7 +281,7 @@ function AllContactsView({ contacts, search, setSearch, filterStatus, setFilterS
         <p style={s.viewSub}>{contacts.length} {contacts.length === 1 ? "person" : "people"} in your network</p>
       </div>
       <div style={s.toolbar}>
-        <input style={s.searchInput} placeholder="Search by name, company, tags..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input style={s.searchInput} placeholder="Search by name, company, role..." value={search} onChange={e => setSearch(e.target.value)} />
         <select style={s.select} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
           <option value="all">All Statuses</option>
           {Object.entries(STATUS_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -288,7 +296,7 @@ function AllContactsView({ contacts, search, setSearch, filterStatus, setFilterS
         <div style={s.empty}><div style={s.emptyIcon}>◈</div><div style={s.emptyText}>No contacts yet. Add your first one.</div></div>
       ) : (
         <div style={s.contactGrid}>
-          {contacts.map(c => <ContactCard key={c.id} contact={c} onSelect={onSelect} onEdit={onEdit} />)}
+          {contacts.map(c => <ContactCard key={c.id} contact={c} onSelect={onSelect} />)}
         </div>
       )}
     </div>
@@ -308,12 +316,6 @@ function ContactCard({ contact: c, onSelect }) {
         </div>
         <span style={{ ...s.statusBadge, color:st.color, background:st.bg }}>{st.label}</span>
       </div>
-      {c.howMet && <div style={s.cardMeta}>Met via {c.howMet}</div>}
-      {c.tags && (
-        <div style={s.tagRow}>
-          {c.tags.split(",").map(t=>t.trim()).filter(Boolean).map(t => <span key={t} style={s.tag}>{t}</span>)}
-        </div>
-      )}
       <div style={s.cardBottom}>
         <span style={s.cardDate}>Last contact: {formatDate(c.lastContact)}</span>
         {c.followUpDate && days !== null && (
@@ -346,18 +348,12 @@ function DetailView({ contact: c, onBack, onEdit, onDelete }) {
       </div>
       <div style={s.detailGrid}>
         {[
-          { label:"How You Met", value:c.howMet },
-          { label:"Email", value:c.email },
-          { label:"LinkedIn", value:c.linkedin, link:true },
           { label:"Last Contact", value:formatDate(c.lastContact) },
           { label:"Follow-Up", value:c.followUpDate ? `${formatDate(c.followUpDate)}${days !== null ? ` (${days === 0 ? "today" : days < 0 ? `${Math.abs(days)}d overdue` : `in ${days}d`})` : ""}` : "—" },
-          { label:"Tags", value:c.tags },
         ].map(f => (
           <div key={f.label} style={s.detailField}>
             <div style={s.detailFieldLabel}>{f.label}</div>
-            <div style={s.detailFieldVal}>
-              {f.link && f.value ? <a href={f.value.startsWith("http") ? f.value : `https://${f.value}`} target="_blank" rel="noreferrer" style={s.link}>{f.value}</a> : (f.value || "—")}
-            </div>
+            <div style={s.detailFieldVal}>{f.value || "—"}</div>
           </div>
         ))}
       </div>
@@ -386,7 +382,7 @@ function PipelineView({ contacts, onSelect }) {
       ) : (
         <>
           {overdue.length > 0 && <PipelineSection title="Overdue" contacts={overdue} onSelect={onSelect} accent="#c47a5a" />}
-          {today.length > 0 && <PipelineSection title="Due Today" contacts={today} onSelect={onSelect} accent="#4a90d9" />}
+          {today.length > 0 && <PipelineSection title="Due Today" contacts={today} onSelect={onSelect} accent="#c9a84c" />}
           {soon.length > 0 && <PipelineSection title="This Week" contacts={soon} onSelect={onSelect} accent="#6b8cba" />}
         </>
       )}
@@ -422,7 +418,22 @@ function PipelineSection({ title, contacts, onSelect, accent }) {
 }
 
 function ContactModal({ form, setForm, editing, onSubmit, onClose }) {
+  const [showCustomDate, setShowCustomDate] = useState(false);
+  const [activePreset, setActivePreset] = useState(null);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function selectPreset(preset) {
+    if (preset.days === null) {
+      setShowCustomDate(true);
+      setActivePreset("custom");
+    } else {
+      setShowCustomDate(false);
+      setActivePreset(preset.label);
+      set("followUpDate", addDays(preset.days));
+    }
+  }
+
   return (
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
@@ -431,43 +442,65 @@ function ContactModal({ form, setForm, editing, onSubmit, onClose }) {
           <button style={s.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div style={s.modalBody}>
-          <div style={s.formRow}>
-            <FF label="Name *" value={form.name} onChange={v => set("name",v)} placeholder="Full name" />
-            <FF label="Company" value={form.company} onChange={v => set("company",v)} placeholder="Company" />
+
+          {/* Name */}
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>Name *</label>
+            <input style={s.input} value={form.name} onChange={e => set("name", e.target.value)} placeholder="Full name" />
           </div>
-          <div style={s.formRow}>
-            <FF label="Role / Title" value={form.role} onChange={v => set("role",v)} placeholder="e.g. VP Sales" />
-            <FF label="Email" value={form.email} onChange={v => set("email",v)} placeholder="email@example.com" type="email" />
-          </div>
-          <div style={s.formRow}>
-            <FF label="LinkedIn URL" value={form.linkedin} onChange={v => set("linkedin",v)} placeholder="linkedin.com/in/..." />
-            <div style={s.formGroup}>
-              <label style={s.formLabel}>How You Met</label>
-              <select style={s.input} value={form.howMet} onChange={e => set("howMet",e.target.value)}>
-                <option value="">Select...</option>
-                {HOW_MET_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-          </div>
+
+          {/* Company + Role */}
           <div style={s.formRow}>
             <div style={s.formGroup}>
-              <label style={s.formLabel}>Status</label>
-              <select style={s.input} value={form.status} onChange={e => set("status",e.target.value)}>
-                {Object.entries(STATUS_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
+              <label style={s.formLabel}>Company</label>
+              <input style={s.input} value={form.company} onChange={e => set("company", e.target.value)} placeholder="Company" />
             </div>
-            <FF label="Tags (comma separated)" value={form.tags} onChange={v => set("tags",v)} placeholder="investor, mentor, sales..." />
+            <div style={s.formGroup}>
+              <label style={s.formLabel}>Role / Title</label>
+              <input style={s.input} value={form.role} onChange={e => set("role", e.target.value)} placeholder="e.g. VP Sales" />
+            </div>
           </div>
-          <div style={s.formRow}>
-            <FF label="Last Contact" value={form.lastContact} onChange={v => set("lastContact",v)} type="date" />
-            <FF label="Follow-Up Date" value={form.followUpDate} onChange={v => set("followUpDate",v)} type="date" />
+
+          {/* Status */}
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>Status</label>
+            <select style={s.input} value={form.status} onChange={e => set("status", e.target.value)}>
+              {Object.entries(STATUS_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+            </select>
           </div>
+
+          {/* Last Contact */}
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>Last Contact</label>
+            <input style={s.input} type="date" value={form.lastContact} onChange={e => set("lastContact", e.target.value)} />
+          </div>
+
+          {/* Follow-Up */}
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>Follow-Up</label>
+            <div style={s.presetRow}>
+              {FOLLOW_UP_PRESETS.map(p => (
+                <button key={p.label}
+                  style={{ ...s.presetBtn, ...(activePreset === (p.days === null ? "custom" : p.label) ? s.presetBtnActive : {}) }}
+                  onClick={() => selectPreset(p)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {(showCustomDate || form.followUpDate) && (
+              <input style={{ ...s.input, marginTop:"8px" }} type="date" value={form.followUpDate}
+                onChange={e => { set("followUpDate", e.target.value); setActivePreset("custom"); setShowCustomDate(true); }} />
+            )}
+          </div>
+
+          {/* Notes */}
           <div style={s.formGroup}>
             <label style={s.formLabel}>Notes</label>
             <textarea style={{ ...s.input, height:"90px", resize:"vertical" }}
-              value={form.notes} onChange={e => set("notes",e.target.value)}
-              placeholder="Key takeaways, context, what you talked about..." />
+              value={form.notes} onChange={e => set("notes", e.target.value)}
+              placeholder="Key takeaways, what you talked about..." />
           </div>
+
         </div>
         <div style={s.modalFooter}>
           <button style={s.cancelBtn} onClick={onClose}>Cancel</button>
@@ -476,15 +509,6 @@ function ContactModal({ form, setForm, editing, onSubmit, onClose }) {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FF({ label, value, onChange, placeholder, type = "text" }) {
-  return (
-    <div style={s.formGroup}>
-      <label style={s.formLabel}>{label}</label>
-      <input style={s.input} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );
 }
